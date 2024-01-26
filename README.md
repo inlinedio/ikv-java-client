@@ -1,2 +1,2 @@
 # ikv-java-client
-Java client for inlinedio/ikv-store
+Java client for inlinedio/ikv-store.
