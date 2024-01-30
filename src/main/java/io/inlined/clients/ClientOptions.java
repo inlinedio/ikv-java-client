@@ -114,6 +114,15 @@ public final class ClientOptions {
       return this;
     }
 
+    // Ex. withKafkaPropertyOverride("ssl.ca.location", "/etc/ssl/certs")
+    // is required on Ubuntu hosts to declare CA certificates.
+    public Builder withKafkaPropertyOverride(String key, String value) {
+      Preconditions.checkArgument(!key.isEmpty());
+      Preconditions.checkArgument(!value.isEmpty());
+      _configBuilder.putStringConfigs("kafkaprop_" + key, value);
+      return this;
+    }
+
     public Builder withConsoleLogging(String level) {
       Preconditions.checkArgument(level != null && !level.isEmpty());
       Preconditions.checkArgument(
