@@ -2,7 +2,6 @@ package io.inlined;
 
 import io.inlined.clients.*;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NearlineIntegrationTests {
@@ -15,10 +14,7 @@ public class NearlineIntegrationTests {
           .useStringPrimaryKey()
           .build();
 
-  // kafka topic name - testing-kafka-topic
-
   @Test
-  @Disabled
   public void upsertAndRead() throws InterruptedException {
     IKVClientFactory factory = new IKVClientFactory(_clientOptions);
 
@@ -28,7 +24,12 @@ public class NearlineIntegrationTests {
 
     IKVDocument document =
         new IKVDocument.Builder()
-            .putStringField("userid", "id_1") // primary key
+            .putStringField("userid", "id_2") // primary key
+                .putIntField("age", 25)
+                .putLongField("ageAsLong", 25)
+                .putFloatField("ageAsFloat", 25.2f)
+                .putDoubleField("ageAsDouble", 25.2)
+                .putStringField("firstname", "Alice")
             .build();
     writer.upsertFieldValues(document);
 
@@ -37,8 +38,16 @@ public class NearlineIntegrationTests {
     InlineKVReader reader = factory.createNewReaderInstance();
     reader.startupReader();
 
-    String userid = reader.getStringValue("id_1", "userid");
-    Assertions.assertEquals(userid, "id_1");
+    String userid = reader.getStringValue("id_2", "userid");
+    Assertions.assertEquals(userid, "id_2");
+
+    Assertions.assertEquals(reader.getIntValue("id_2", "age"), 25);
+    Assertions.assertEquals(reader.getLongValue("id_2", "ageAsLong"), 25);
+    Assertions.assertEquals(reader.getFloatValue("id_2", "ageAsFloat"), 25.2f);
+    Assertions.assertEquals(reader.getDoubleValue("id_2", "ageAsDouble"), 25.2);
+
+    String firstName = reader.getStringValue("id_2", "firstname");
+    Assertions.assertEquals(firstName, "Alice");
 
     reader.shutdownReader();
   }

@@ -70,14 +70,14 @@ public interface IKVDocument {
       Preconditions.checkArgument(!fieldName.isEmpty());
 
       // TODO: see if its possible to avoid allocating a new buffer
-      ByteBuffer bb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
-      bb.putInt(value);
+      byte[] bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
 
       FieldValue fieldValue =
           FieldValue.newBuilder()
               .setFieldType(Common.FieldType.INT32)
-              .setValue(ByteString.copyFrom(bb))
+              .setValue(ByteString.copyFrom(bytes))
               .build();
+
       _fields.put(fieldName, fieldValue);
       return this;
     }
@@ -85,13 +85,12 @@ public interface IKVDocument {
     public Builder putLongField(String fieldName, long value) {
       Preconditions.checkArgument(!fieldName.isEmpty());
 
-      ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-      bb.putLong(value);
+      byte[] bytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array();
 
       FieldValue fieldValue =
           FieldValue.newBuilder()
               .setFieldType(Common.FieldType.INT64)
-              .setValue(ByteString.copyFrom(bb))
+              .setValue(ByteString.copyFrom(bytes))
               .build();
       _fields.put(fieldName, fieldValue);
       return this;
@@ -100,13 +99,12 @@ public interface IKVDocument {
     public Builder putFloatField(String fieldName, float value) {
       Preconditions.checkArgument(!fieldName.isEmpty());
 
-      ByteBuffer bb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
-      bb.putFloat(value);
+      byte[] bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(value).array();
 
       FieldValue fieldValue =
           FieldValue.newBuilder()
               .setFieldType(Common.FieldType.FLOAT32)
-              .setValue(ByteString.copyFrom(bb))
+              .setValue(ByteString.copyFrom(bytes))
               .build();
       _fields.put(fieldName, fieldValue);
       return this;
@@ -115,13 +113,12 @@ public interface IKVDocument {
     public Builder putDoubleField(String fieldName, double value) {
       Preconditions.checkArgument(!fieldName.isEmpty());
 
-      ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-      bb.putDouble(value);
+      byte[] bytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putDouble(value).array();
 
       FieldValue fieldValue =
           FieldValue.newBuilder()
               .setFieldType(Common.FieldType.FLOAT64)
-              .setValue(ByteString.copyFrom(bb))
+              .setValue(ByteString.copyFrom(bytes))
               .build();
       _fields.put(fieldName, fieldValue);
       return this;
