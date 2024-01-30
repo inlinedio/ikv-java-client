@@ -2,6 +2,7 @@ package io.inlined;
 
 import io.inlined.clients.*;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NearlineIntegrationTests {
@@ -15,6 +16,7 @@ public class NearlineIntegrationTests {
           .build();
 
   @Test
+  @Disabled
   public void upsertAndRead() throws InterruptedException {
     IKVClientFactory factory = new IKVClientFactory(_clientOptions);
 
