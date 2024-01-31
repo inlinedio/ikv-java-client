@@ -14,11 +14,11 @@ public final class ClientOptions {
   private final IKVStoreConfig _config;
   private final FieldType _primaryKeyType;
 
-  private ClientOptions(IKVStoreConfig config, FieldType primaryKeyType) {
+  private ClientOptions(IKVStoreConfig config, @Nullable FieldType primaryKeyType) {
     _config = Objects.requireNonNull(config);
 
     Preconditions.checkArgument(primaryKeyType != FieldType.UNKNOWN);
-    _primaryKeyType = Objects.requireNonNull(primaryKeyType);
+    _primaryKeyType = primaryKeyType;
   }
 
   public IKVStoreConfig asIKVStoreConfig() {
@@ -26,6 +26,7 @@ public final class ClientOptions {
   }
 
   // TODO: deprecate - key type should not be an option
+  @Nullable
   public FieldType primaryKeyType() {
     return _primaryKeyType;
   }

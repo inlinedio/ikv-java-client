@@ -5,6 +5,7 @@ plugins {
     id 'com.google.protobuf' version '0.9.1'
     id "com.diffplug.spotless" version "6.23.3"
     id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 version = '0.0.1'
@@ -99,6 +100,10 @@ jar {
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+}
+
+shadowJar {
+    mergeServiceFiles()
 }
 
 publishing {
