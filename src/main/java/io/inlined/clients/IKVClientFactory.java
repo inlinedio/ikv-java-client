@@ -2,23 +2,19 @@ package io.inlined.clients;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.inlineio.schemas.Common;
-import java.util.Objects;
 
 public class IKVClientFactory {
-  private final ClientOptions _clientOptions;
 
-  public IKVClientFactory(ClientOptions clientOptions) {
-    _clientOptions = Objects.requireNonNull(clientOptions);
-  }
+  public IKVClientFactory() {}
 
-  public InlineKVReader createNewReaderInstance() {
+  public InlineKVReader createNewReaderInstance(ClientOptions clientOptions) {
     // TODO: remove server side config fetching
-    ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(_clientOptions);
+    ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
     Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
-    Common.IKVStoreConfig clientSuppliedConfig = _clientOptions.asIKVStoreConfig();
+    Common.IKVStoreConfig clientSuppliedConfig = clientOptions.asIKVStoreConfig();
     Common.IKVStoreConfig mergedConfig = mergeConfigs(clientSuppliedConfig, serverConfig);
 
-    return new DefaultInlineKVReader(_clientOptions, mergedConfig);
+    return new DefaultInlineKVReader(clientOptions, mergedConfig);
   }
 
   @VisibleForTesting
@@ -27,7 +23,7 @@ public class IKVClientFactory {
     return Common.IKVStoreConfig.newBuilder().mergeFrom(serverCfg).mergeFrom(clientCfg).build();
   }
 
-  public InlineKVWriter createNewWriterInstance() {
-    return new DefaultInlineKVWriter(_clientOptions);
+  public InlineKVWriter createNewWriterInstance(ClientOptions clientOptions) {
+    return new DefaultInlineKVWriter(clientOptions);
   }
 }

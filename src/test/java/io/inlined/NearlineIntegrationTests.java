@@ -6,21 +6,22 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NearlineIntegrationTests {
-  private final ClientOptions _clientOptions =
-      new ClientOptions.Builder()
-          .withMountDirectory("/tmp/NearlineIntegrationTests")
-          .withStoreName("testing-store")
-          .withAccountId("testing-account-v1")
-          .withAccountPassKey("testing-account-passkey")
-          .useStringPrimaryKey()
-          .build();
 
   @Test
   @Disabled
   public void upsertAndRead() throws InterruptedException {
-    IKVClientFactory factory = new IKVClientFactory(_clientOptions);
+    ClientOptions clientOptions =
+        new ClientOptions.Builder()
+            .withMountDirectory("/tmp/NearlineIntegrationTests")
+            .withStoreName("testing-store")
+            .withAccountId(System.getenv("IKV_ACCOUNT_ID"))
+            .withAccountPassKey(System.getenv("IKV_ACCOUNT_PASSKEY"))
+            .useStringPrimaryKey()
+            .build();
 
-    /*InlineKVWriter writer = factory.createNewWriterInstance();
+    IKVClientFactory factory = new IKVClientFactory();
+
+    /*InlineKVWriter writer = factory.createNewWriterInstance(clientOptions);
 
     writer.startupWriter();
 
@@ -37,7 +38,7 @@ public class NearlineIntegrationTests {
 
     Thread.sleep(1000);*/
 
-    InlineKVReader reader = factory.createNewReaderInstance();
+    InlineKVReader reader = factory.createNewReaderInstance(clientOptions);
     reader.startupReader();
 
     String userid = reader.getStringValue("id_2", "userid");
