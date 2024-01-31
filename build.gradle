@@ -147,3 +147,4 @@ spotless {
 
 build.dependsOn 'spotlessApply'
 build.dependsOn 'shadowJar'
+publishShadowPublicationToMavenLocal.dependsOn 'jar'
