@@ -103,17 +103,23 @@ jar {
 }
 
 shadowJar {
+    archiveClassifier.set('')
     mergeServiceFiles()
 }
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        shadow(MavenPublication) { publication ->
             groupId "io.inlined"
             artifactId "ikv-java-client"
-            version "0.0.1"
-            from components.java
+            project.shadow.component(publication)
         }
+
+        /*maven(MavenPublication) {
+            groupId "io.inlined"
+            artifactId "ikv-java-client"
+            from components.java
+        }*/
     }
 }
 
@@ -140,3 +146,4 @@ spotless {
 }
 
 build.dependsOn 'spotlessApply'
+build.dependsOn 'shadowJar'
