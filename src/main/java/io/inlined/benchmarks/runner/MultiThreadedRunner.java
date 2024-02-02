@@ -35,8 +35,8 @@ public class MultiThreadedRunner {
    * 3) value_size: (int, required) size of value for each inner field in bytes
    * 4) init_writes: (int, optional) specify any value to initialize db with writes, or omit to
    * skip write initialization
-   * 5) max_runs: (int, optional) number of loops over num_samples for read benchmark. Use if
-   * running without duration_sec param.
+   * 5) max_runs: (int, optional/required) number of loops over num_samples for read benchmark. Required if
+   * running without duration_sec param, else omit.
    * 6) duration_sec: (int, optional) benchmark time window
    * 7) threads: (int, optional) number of parallel client threads to launch for benchmarking
    * 8) max_qps: (int, optional) max QPS (among all threads) or load for benchmark
