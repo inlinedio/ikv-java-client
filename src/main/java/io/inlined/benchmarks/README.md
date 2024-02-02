@@ -6,7 +6,7 @@ Execute `./gradlew build` in project root directory and find the executable in
 
 ### Execute
 `java -cp /path/to/jar io.inlined.benchmarks.runner.MultiThreadedRunner "{redis|ikv}" "params"`.
-Where `params` are of the format "key:value" ex "threads:2". For full param reference list,
+Where `params` are of the format "k1:v1,k2:v2" ex "threads:2,max_qps:10000". For full param reference list,
 see javadocs for `MultiThreadedRunner`.
 
 ### Code Layout
