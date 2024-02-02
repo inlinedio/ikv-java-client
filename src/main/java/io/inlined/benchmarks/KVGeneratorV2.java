@@ -7,11 +7,11 @@ import java.util.Arrays;
 public class KVGeneratorV2 {
   private final ArrayList<byte[]> _keys;
 
-  public KVGeneratorV2(int samples, int valueSize) {
+  public KVGeneratorV2(int samples) {
     _keys = new ArrayList<>(samples);
     for (int i = 0; i < samples; i++) {
-      byte[] key = String.format("{key}-%d", i).getBytes(StandardCharsets.UTF_8);
-      byte[] value = createPseudoRandomBytes(valueSize, i);
+      // {} help specify partitioning key for redis.
+      byte[] key = String.format("key-{%d}", i).getBytes(StandardCharsets.UTF_8);
       _keys.add(key);
     }
   }

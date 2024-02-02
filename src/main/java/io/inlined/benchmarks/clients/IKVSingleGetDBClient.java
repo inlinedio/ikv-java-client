@@ -1,27 +1,28 @@
 package io.inlined.benchmarks.clients;
 
-import io.inlined.benchmarks.SingleGetDBClient;
+import io.inlined.benchmarks.DBClient;
 import io.inlined.clients.*;
 import java.util.Map;
 
-public class IKVSingleGetDBClient implements SingleGetDBClient {
+public class IKVSingleGetDBClient implements DBClient {
   private final InlineKVReader _reader;
   private final InlineKVWriter _writer;
 
-  public IKVSingleGetDBClient(String accountId, String accountPassKey) {
+  public IKVSingleGetDBClient(String accountId, String accountPassKey, String storeName) {
     ClientOptions writerClientOptions =
         new ClientOptions.Builder()
             .withAccountId(accountId)
             .withAccountPassKey(accountPassKey)
-            .withStoreName("testing-store")
+            .withStoreName(storeName)
             .build();
 
     ClientOptions readerClientOptions =
         new ClientOptions.Builder()
             .withMountDirectory("/tmp/Benchmarks")
-            .withStoreName("testing-store")
+            .withStoreName(storeName)
             .withAccountId(accountId)
             .withAccountPassKey(accountPassKey)
+            // skip override if running on mac-os
             .withKafkaPropertyOverride("ssl.ca.location", "/etc/ssl/certs")
             .useBytesPrimaryKey()
             .build();

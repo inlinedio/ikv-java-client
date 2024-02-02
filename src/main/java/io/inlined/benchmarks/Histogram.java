@@ -3,14 +3,15 @@ package io.inlined.benchmarks;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 
 public class Histogram {
   private final String _name;
-  private final ArrayList<Long> _data;
+  private final LinkedList<Long> _data;
 
-  public Histogram(String name, int entriesHint) {
+  public Histogram(String name) {
     _name = Preconditions.checkNotNull(name);
-    _data = new ArrayList<>(entriesHint);
+    _data = new LinkedList<>();
   }
 
   public synchronized void captureLatency(long latency) {
