@@ -1,18 +1,11 @@
 package io.inlined;
 
-import io.inlined.benchmarks.*;
-import java.util.List;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
-public class DBBenchmarks {
-  private IKVLatencyBenchmarkWorkflow _ikvworkflow;
-  private RedisLatencyBenchmarkWorkflow _redisworkflow;
-  private List<byte[]> _keys;
-  private byte[][] _rediskeys;
-
+public class NoopBenchmark {
   @Setup(Level.Invocation)
   public void setup() {}
 
