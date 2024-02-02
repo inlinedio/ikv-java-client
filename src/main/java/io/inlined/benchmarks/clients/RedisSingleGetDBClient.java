@@ -1,23 +1,33 @@
 package io.inlined.benchmarks.clients;
 
 import com.google.common.collect.Maps;
-import io.inlined.benchmarks.SingleGetDBClient;
+import io.inlined.benchmarks.DBClient;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.JedisPoolConfig;
 
-public class RedisSingleGetDBClient implements SingleGetDBClient {
+public class RedisSingleGetDBClient implements DBClient {
+  private static final Logger LOGGER = LogManager.getLogger(RedisSingleGetDBClient.class);
+
   private final Set<HostAndPort> _jedisClusterNodes;
+  private final int _maxConnections;
+
   private volatile JedisCluster _jedisCluster;
 
   // private volatile Jedis _jedis;  // for single node local benchmark
 
-  public RedisSingleGetDBClient(String clusterUrl) {
+  public RedisSingleGetDBClient(String clusterUrls, int maxConnections) {
     _jedisClusterNodes = new HashSet<>();
-    _jedisClusterNodes.add(new HostAndPort(clusterUrl, 6379));
+    for (String clusterUrl : clusterUrls.split("\\|")) {
+      _jedisClusterNodes.add(new HostAndPort(clusterUrl, 6379));
+    }
+    _maxConnections = maxConnections;
   }
 
   @Override
@@ -27,6 +37,11 @@ public class RedisSingleGetDBClient implements SingleGetDBClient {
     // _jedis = jedisPool.getResource();
 
     try {
+      JedisPoolConfig cfg = new JedisPoolConfig();
+      cfg.setMaxTotal(_maxConnections); // 2x num concurrent benchmarking threads
+      cfg.setMaxIdle(_maxConnections);
+
+      LOGGER.info("JedisClusterNodes: {}", _jedisClusterNodes);
       _jedisCluster = new JedisCluster(_jedisClusterNodes);
     } catch (Exception e) {
       throw new RuntimeException(e);

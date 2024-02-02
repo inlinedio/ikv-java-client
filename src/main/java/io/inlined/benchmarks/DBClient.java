@@ -2,7 +2,7 @@ package io.inlined.benchmarks;
 
 import java.util.Map;
 
-public interface SingleGetDBClient {
+public interface DBClient {
   // init methods are implementation dependent
   void startup();
 

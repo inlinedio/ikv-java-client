@@ -165,6 +165,7 @@ public class NativeBinaryManager {
       try (FileOutputStream fos = new FileOutputStream(filename)) {
         fos.write(contentBytes);
       }
+      LOGGER.info("Downloaded latest native binary for ikv with S3-key: {}", key);
     } catch (FileNotFoundException e) {
       // thrown if filepath was dir, cannot be opened etc.
       throw new IOException(e);
@@ -200,7 +201,7 @@ public class NativeBinaryManager {
       return Optional.empty();
     }
 
-    LOGGER.info("Local os-type: {} architecture: {}", osType, osArchitecture);
+    // LOGGER.info("Local os-type: {} architecture: {}", osType, osArchitecture);
     return Optional.of(String.format("release/%s-%s", osType, osArchitecture));
   }
 
