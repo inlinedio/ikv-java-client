@@ -14,29 +14,29 @@ public class NearlineIntegrationTests {
         new ClientOptions.Builder()
             .withMountDirectory("/tmp/NearlineIntegrationTests")
             .withStoreName("testing-store")
-            .withAccountId(System.getenv("IKV_ACCOUNT_ID"))
-            .withAccountPassKey(System.getenv("IKV_ACCOUNT_PASSKEY"))
+            .withAccountId("foo")
+            .withAccountPassKey("bar")
             .useStringPrimaryKey()
             .build();
 
     IKVClientFactory factory = new IKVClientFactory();
 
-    /*InlineKVWriter writer = factory.createNewWriterInstance(clientOptions);
+    InlineKVWriter writer = factory.createNewWriterInstance(clientOptions);
 
     writer.startupWriter();
 
     IKVDocument document =
         new IKVDocument.Builder()
             .putStringField("userid", "id_2") // primary key
-                .putIntField("age", 25)
-                .putLongField("ageAsLong", 25)
-                .putFloatField("ageAsFloat", 25.2f)
-                .putDoubleField("ageAsDouble", 25.2)
-                .putStringField("firstname", "Alice")
+            .putIntField("age", 25)
+            .putLongField("ageAsLong", 25)
+            .putFloatField("ageAsFloat", 25.2f)
+            .putDoubleField("ageAsDouble", 25.2)
+            .putStringField("firstname", "Alice")
             .build();
     writer.upsertFieldValues(document);
 
-    Thread.sleep(1000);*/
+    Thread.sleep(1000);
 
     InlineKVReader reader = factory.createNewReaderInstance(clientOptions);
     reader.startupReader();

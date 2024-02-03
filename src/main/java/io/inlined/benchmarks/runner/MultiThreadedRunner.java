@@ -94,6 +94,7 @@ public class MultiThreadedRunner {
   private final boolean _initWrites;
 
   private final int _maxRuns;
+  private final int _numWarmups;
   private final int _threads;
   private final double _maxRate;
   private final Duration _benchmarkDuration;
@@ -111,6 +112,7 @@ public class MultiThreadedRunner {
     _kvGenerator = new KVGeneratorV2(_numSamples);
 
     _maxRuns = params.getIntegerParameter("max_runs").orElse(Integer.MAX_VALUE);
+    _numWarmups = params.getIntegerParameter("warmups").orElse(1);
     _threads = params.getIntegerParameter("threads").orElse(1);
     _maxRate = params.getIntegerParameter("max_qps").orElse(Integer.MAX_VALUE);
     _benchmarkDuration =
@@ -132,10 +134,12 @@ public class MultiThreadedRunner {
   public void execGetBenchmark() {
     // single warmup iteration
     Instant start = Instant.now();
-    singleThreadedGetBenchmark(
-        new Histogram("warmup"), RateLimiter.create(Double.MAX_VALUE), Duration.ofDays(365), 1);
+    for (int i = 0; i < _numWarmups; i++) {
+      singleThreadedGetBenchmark(
+          new Histogram("warmup"), RateLimiter.create(Double.MAX_VALUE), Duration.ofDays(365), 1);
+    }
     LOGGER.info(
-        "execGetBenchmark warmup done in: {} sec",
+        "execGetBenchmark warmup(s) done in: {} sec",
         Duration.between(start, Instant.now()).toSeconds());
 
     // instrumented run

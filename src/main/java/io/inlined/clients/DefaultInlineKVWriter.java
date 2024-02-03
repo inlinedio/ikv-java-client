@@ -8,7 +8,7 @@ import com.inlineio.schemas.InlineKVWriteServiceGrpc;
 import com.inlineio.schemas.Services.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.protobuf.StatusProto;
+import io.grpc.StatusRuntimeException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
@@ -25,7 +25,6 @@ public class DefaultInlineKVWriter implements InlineKVWriter {
 
   @Override
   public void startupWriter() {
-    // TODO: stub creation- use dns
     ManagedChannelBuilder<?> channelBuilder =
         ManagedChannelBuilder.forAddress(
                 IKVConstants.IKV_GATEWAY_GRPC_URL, IKVConstants.IKV_GATEWAY_GRPC_PORT)
@@ -57,18 +56,25 @@ public class DefaultInlineKVWriter implements InlineKVWriter {
             .setUserStoreContextInitializer(_userStoreCtxInitializer)
             .build();
 
-    try {
-      // make grpc call
-      Status ignored = _stub.upsertFieldValues(request);
-    } catch (Throwable thrown) {
-      // propagate errors
-      com.google.rpc.Status errorStatus = StatusProto.fromThrowable(thrown);
-      if (errorStatus != null) {
-        throw new RuntimeException(
-            "upsertFieldValues failed with error: "
-                + MoreObjects.firstNonNull(errorStatus.getMessage(), "unknown"));
+    StatusRuntimeException maybeException = null;
+    for (int retry = 0; retry < 3; retry++) {
+      try {
+        // make grpc call
+        Status ignored = _stub.upsertFieldValues(request);
+        return;
+      } catch (StatusRuntimeException e) {
+        maybeException = e;
+
+        // retry only when servers are unavailable
+        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
+          break;
+        }
       }
     }
+
+    throw new RuntimeException(
+        "upsertFieldValues failed with error: "
+            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
   }
 
   @Override
@@ -93,18 +99,25 @@ public class DefaultInlineKVWriter implements InlineKVWriter {
             .setUserStoreContextInitializer(_userStoreCtxInitializer)
             .build();
 
-    try {
-      // make grpc call
-      Status _ignored = _stub.deleteFieldValues(request);
-    } catch (Throwable thrown) {
-      // propagate errors
-      com.google.rpc.Status errorStatus = StatusProto.fromThrowable(thrown);
-      if (errorStatus != null) {
-        throw new RuntimeException(
-            "deleteFieldValues failed with error: "
-                + MoreObjects.firstNonNull(errorStatus.getMessage(), "unknown"));
+    StatusRuntimeException maybeException = null;
+    for (int retry = 0; retry < 3; retry++) {
+      try {
+        // make grpc call
+        Status ignored = _stub.deleteFieldValues(request);
+        return;
+      } catch (StatusRuntimeException e) {
+        maybeException = e;
+
+        // retry only when servers are unavailable
+        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
+          break;
+        }
       }
     }
+
+    throw new RuntimeException(
+        "deleteFieldValues failed with error: "
+            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
   }
 
   @Override
@@ -125,17 +138,24 @@ public class DefaultInlineKVWriter implements InlineKVWriter {
             .setUserStoreContextInitializer(_userStoreCtxInitializer)
             .build();
 
-    try {
-      // make grpc call
-      Status _ignored = _stub.deleteDocument(request);
-    } catch (Throwable thrown) {
-      // propagate errors
-      com.google.rpc.Status errorStatus = StatusProto.fromThrowable(thrown);
-      if (errorStatus != null) {
-        throw new RuntimeException(
-            "deleteDocument failed with error: "
-                + MoreObjects.firstNonNull(errorStatus.getMessage(), "unknown"));
+    StatusRuntimeException maybeException = null;
+    for (int retry = 0; retry < 3; retry++) {
+      try {
+        // make grpc call
+        Status ignored = _stub.deleteDocument(request);
+        return;
+      } catch (StatusRuntimeException e) {
+        maybeException = e;
+
+        // retry only when servers are unavailable
+        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
+          break;
+        }
       }
     }
+
+    throw new RuntimeException(
+        "deleteDocument failed with error: "
+            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
   }
 }
