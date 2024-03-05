@@ -10,12 +10,16 @@ public class NearlineIntegrationTests {
   @Test
   @Disabled
   public void upsertAndRead() throws InterruptedException {
+    String accountId = System.getenv("IKV_ACCOUNT_ID");
+    String storeName = System.getenv("IKV_STORE_NAME");
+    String accountPasskey = System.getenv("IKV_ACCOUNT_PASSKEY");
+
     ClientOptions clientOptions =
         new ClientOptions.Builder()
-            .withMountDirectory("/tmp/NearlineIntegrationTests")
-            .withStoreName("testing-store")
-            .withAccountId("foo")
-            .withAccountPassKey("bar")
+            .withMountDirectory("/tmp/UpsertAndRead")
+            .withStoreName(storeName)
+            .withAccountId(accountId)
+            .withAccountPassKey(accountPasskey)
             .useStringPrimaryKey()
             .build();
 
@@ -51,6 +55,52 @@ public class NearlineIntegrationTests {
 
     String firstName = reader.getStringValue("id_2", "firstname");
     Assertions.assertEquals(firstName, "Alice");
+
+    reader.shutdownReader();
+  }
+
+  @Test
+  @Disabled
+  public void newStoreProvisioning() throws InterruptedException {
+    String accountId = System.getenv("IKV_ACCOUNT_ID");
+    String storeName = System.getenv("IKV_STORE_NAME");
+    String accountPasskey = System.getenv("IKV_ACCOUNT_PASSKEY");
+    String primaryKeyFieldName = System.getenv("IKV_PRIMARY_KEY");
+
+    ClientOptions clientOptions =
+        new ClientOptions.Builder()
+            .withMountDirectory("/tmp/NewStoreProvisioning")
+            .withStoreName(storeName)
+            .withAccountId(accountId)
+            .withAccountPassKey(accountPasskey)
+            // WARNING! change based on usecase
+            .useStringPrimaryKey()
+            .build();
+
+    IKVClientFactory factory = new IKVClientFactory();
+
+    InlineKVWriter writer = factory.createNewWriterInstance(clientOptions);
+
+    writer.startupWriter();
+
+    // Upsert document
+    IKVDocument document =
+        new IKVDocument.Builder()
+            .putStringField(primaryKeyFieldName, "testing_primary_key")
+            .build();
+    writer.upsertFieldValues(document);
+    Thread.sleep(5000);
+
+    InlineKVReader reader = factory.createNewReaderInstance(clientOptions);
+    reader.startupReader();
+
+    String value = reader.getStringValue("testing_primary_key", primaryKeyFieldName);
+    Assertions.assertEquals(value, "testing_primary_key");
+
+    // Delete document
+    writer.deleteDocument(document);
+    Thread.sleep(5000);
+    Assertions.assertNull(reader.getStringValue("testing_primary_key", primaryKeyFieldName));
 
     reader.shutdownReader();
   }
