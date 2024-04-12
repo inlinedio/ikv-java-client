@@ -8,31 +8,51 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWriter {
-  private final DefaultInlineKVReader _defaultInlineKVReader;
+  private final DefaultInlineKVReader _dbAccessor;
+
+  private volatile boolean _readerOpen = false;
+  private volatile boolean _writerOpen = false;
 
   public DirectJNIBenchmarkingClient(ClientOptions options, Common.IKVStoreConfig mergedConfig) {
-    _defaultInlineKVReader = new DefaultInlineKVReader(options, mergedConfig);
+    _dbAccessor = new DefaultInlineKVReader(options, mergedConfig);
+    _readerOpen = false;
+    _writerOpen = false;
   }
 
   @Override
   public void startupReader() throws RuntimeException {
-    // Reader Startup
-    _defaultInlineKVReader.startupReader();
+    _readerOpen = true;
+    _dbAccessor.startupReader();
   }
 
   @Override
   public void shutdownReader() {
-    throw new UnsupportedOperationException("not supported on direct client");
+    _readerOpen = false;
+
+    if (_writerOpen) {
+      // writer also needs access to jni object
+      return;
+    }
+
+    _dbAccessor.shutdownReader();
   }
 
   @Override
   public void startupWriter() {
-    startupReader();
+    _writerOpen = true;
+    _dbAccessor.startupReader();
   }
 
   @Override
   public void shutdownWriter() {
-    throw new UnsupportedOperationException("not supported on direct client");
+    _writerOpen = false;
+
+    if (_readerOpen) {
+      // reader also needs access to jni object
+      return;
+    }
+
+    _dbAccessor.shutdownReader();
   }
 
   @Override
@@ -50,9 +70,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _defaultInlineKVReader
-        .ikvClientJNI()
-        .processIKVDataEvent(_defaultInlineKVReader.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   @Override
@@ -71,9 +89,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _defaultInlineKVReader
-        .ikvClientJNI()
-        .processIKVDataEvent(_defaultInlineKVReader.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   @Override
@@ -89,54 +105,52 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _defaultInlineKVReader
-        .ikvClientJNI()
-        .processIKVDataEvent(_defaultInlineKVReader.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   @Nullable
   @Override
   public byte[] getBytesValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getBytesValue(key, fieldName);
+    return _dbAccessor.getBytesValue(key, fieldName);
   }
 
   @Override
   public List<byte[]> multiGetBytesValues(List<Object> keys, String fieldName) {
-    return _defaultInlineKVReader.multiGetBytesValues(keys, fieldName);
+    return _dbAccessor.multiGetBytesValues(keys, fieldName);
   }
 
   @Nullable
   @Override
   public String getStringValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getStringValue(key, fieldName);
+    return _dbAccessor.getStringValue(key, fieldName);
   }
 
   @Override
   public List<String> multiGetStringValues(List<Object> keys, String fieldName) {
-    return _defaultInlineKVReader.multiGetStringValues(keys, fieldName);
+    return _dbAccessor.multiGetStringValues(keys, fieldName);
   }
 
   @Nullable
   @Override
   public Integer getIntValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getIntValue(key, fieldName);
+    return _dbAccessor.getIntValue(key, fieldName);
   }
 
   @Nullable
   @Override
   public Long getLongValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getLongValue(key, fieldName);
+    return _dbAccessor.getLongValue(key, fieldName);
   }
 
   @Nullable
   @Override
   public Float getFloatValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getFloatValue(key, fieldName);
+    return _dbAccessor.getFloatValue(key, fieldName);
   }
 
   @Nullable
   @Override
   public Double getDoubleValue(Object key, String fieldName) {
-    return _defaultInlineKVReader.getDoubleValue(key, fieldName);
+    return _dbAccessor.getDoubleValue(key, fieldName);
   }
 }

@@ -3,18 +3,12 @@ package io.inlined.benchmarks.runner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.RateLimiter;
-import io.inlined.benchmarks.BenchmarkParams;
-import io.inlined.benchmarks.DBClient;
-import io.inlined.benchmarks.Histogram;
-import io.inlined.benchmarks.KVGeneratorV2;
+import io.inlined.benchmarks.*;
 import io.inlined.benchmarks.clients.IKVSingleGetDBClient;
 import io.inlined.benchmarks.clients.RedisSingleGetDBClient;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -187,9 +181,12 @@ public class MultiThreadedRunner {
 
     benchLoop:
     for (int runId = 0; runId < maxRuns; runId++) {
-      for (int sample = 0; sample < _numSamples; sample++) {
+      Iterator<Integer> sequence = LookupSequenceGenerators.sequential(_numSamples);
 
-        // end time check
+      while (sequence.hasNext()) {
+        int sample = sequence.next();
+
+        // time check
         if (Instant.now().isAfter(deadline)) {
           break benchLoop;
         }

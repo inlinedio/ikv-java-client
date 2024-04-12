@@ -25,6 +25,7 @@ public class DefaultInlineKVReader implements InlineKVReader {
     _clientServerMergedConfig = clientServerMergedConfig;
   }
 
+  // ok to call even if already open
   @Override
   public void startupReader() throws RuntimeException {
     if (_handle != UNINITIALIZED_HANDLE || _ikvClientJni != null) {
@@ -46,8 +47,13 @@ public class DefaultInlineKVReader implements InlineKVReader {
     _handle = _ikvClientJni.open(_clientServerMergedConfig.toByteArray());
   }
 
+  // ok to call even if already closed
   @Override
   public void shutdownReader() throws RuntimeException {
+    if (_handle == UNINITIALIZED_HANDLE || _ikvClientJni == null) {
+      return;
+    }
+
     // can throw
     _ikvClientJni.close(_handle);
     _ikvClientJni = null;
