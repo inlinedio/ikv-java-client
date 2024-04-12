@@ -22,8 +22,6 @@ public class IKVSingleGetDBClient implements DBClient {
             .withStoreName(storeName)
             .withAccountId(accountId)
             .withAccountPassKey(accountPassKey)
-            // skip override if running on mac-os
-            .withKafkaPropertyOverride("ssl.ca.location", "/etc/ssl/certs")
             .useBytesPrimaryKey()
             .build();
 
