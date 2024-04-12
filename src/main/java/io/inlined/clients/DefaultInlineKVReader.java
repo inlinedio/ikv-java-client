@@ -59,6 +59,11 @@ public class DefaultInlineKVReader implements InlineKVReader {
     return _handle;
   }
 
+  @VisibleForTesting
+  IKVClientJNI ikvClientJNI() {
+    return _ikvClientJni;
+  }
+
   @Nullable
   @Override
   public byte[] getBytesValue(Object primaryKey, String fieldName) {

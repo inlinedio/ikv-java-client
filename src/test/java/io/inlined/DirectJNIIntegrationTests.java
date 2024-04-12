@@ -21,14 +21,14 @@ public class DirectJNIIntegrationTests {
 
   // @Test
   public void openAndClose() {
-    InlineKVReader client = new DirectJNITestingClient(_clientOptions);
+    InlineKVReader client = new DirectJNIBenchmarkingClient(_clientOptions, null);
     client.startupReader();
     client.shutdownReader();
   }
 
   // @Test
   public void singleAndBatchReads() {
-    DirectJNITestingClient client = new DirectJNITestingClient(_clientOptions);
+    DirectJNIBenchmarkingClient client = new DirectJNIBenchmarkingClient(_clientOptions, null);
     client.startupWriter();
 
     // document1
@@ -98,7 +98,7 @@ public class DirectJNIIntegrationTests {
 
   // @Test
   public void deletes() {
-    DirectJNITestingClient client = new DirectJNITestingClient(_clientOptions);
+    DirectJNIBenchmarkingClient client = new DirectJNIBenchmarkingClient(_clientOptions, null);
     client.startupWriter();
 
     // document1
