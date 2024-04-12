@@ -17,6 +17,15 @@ public class IKVClientFactory {
     return new DefaultInlineKVReader(clientOptions, mergedConfig);
   }
 
+  public DirectJNIBenchmarkingClient createDirectBenchmarkingClient(ClientOptions clientOptions) {
+    ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
+    Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
+    Common.IKVStoreConfig clientSuppliedConfig = clientOptions.asIKVStoreConfig();
+    Common.IKVStoreConfig mergedConfig = mergeConfigs(clientSuppliedConfig, serverConfig);
+
+    return new DirectJNIBenchmarkingClient(clientOptions, mergedConfig);
+  }
+
   @VisibleForTesting
   public static Common.IKVStoreConfig mergeConfigs(
       Common.IKVStoreConfig clientCfg, Common.IKVStoreConfig serverCfg) {
