@@ -48,9 +48,12 @@ public final class IKVClientJNI {
   public native byte[] batchReadField(
       long indexHandle, byte[] sizePrefixedPrimaryKeys, String fieldNames);
 
-  /** Write method - only for testing. */
+  /** Write method - only for benchmarking. */
   public native void processIKVDataEvent(long indexHandle, byte[] ikvDataEvent)
       throws RuntimeException;
+
+  /** Flush writes method - only for benchmarking. */
+  public native void flushWrites(long indexHandle) throws RuntimeException;
 
   /**
    * Hook to build index by consuming nearline event stream. Index is built in-place of existing

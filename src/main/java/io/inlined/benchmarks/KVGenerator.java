@@ -4,14 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class KVGeneratorV2 {
+public class KVGenerator {
   private final ArrayList<byte[]> _keys;
 
-  public KVGeneratorV2(int samples) {
+  public KVGenerator(int samples) {
     _keys = new ArrayList<>(samples);
     for (int i = 0; i < samples; i++) {
       // {} help specify partitioning key for redis.
-      byte[] key = String.format("key-{%d}", i).getBytes(StandardCharsets.UTF_8);
+      byte[] key = String.format("KEY-{%d}", i).getBytes(StandardCharsets.UTF_8);
       _keys.add(key);
     }
   }

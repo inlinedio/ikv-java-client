@@ -1,5 +1,6 @@
 package io.inlined.clients;
 
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -11,7 +12,7 @@ public interface InlineKVReader {
   @Nullable
   byte[] getBytesValue(Object primaryKey, String fieldName);
 
-  List<byte[]> multiGetBytesValues(List<Object> primaryKeys, String fieldName);
+  Iterator<byte[]> multiGetBytesValues(List<Object> primaryKeys, String fieldName);
 
   @Nullable
   String getStringValue(Object primaryKey, String fieldName);

@@ -158,20 +158,10 @@ public class DefaultInlineKVReader implements InlineKVReader {
     return results;
   }
 
+  // Returns nullable byte[] in the form of an iterator
   @Override
-  public List<byte[]> multiGetBytesValues(List<Object> primaryKeys, String fieldName) {
-    Iterator<byte[]> result = multiGetRawByteValues(primaryKeys, fieldName);
-    if (!result.hasNext()) {
-      return Collections.emptyList();
-    }
-
-    // drain into list, avoid Stream in hot path
-    List<byte[]> results = new ArrayList<>(primaryKeys.size());
-    while (result.hasNext()) {
-      @Nullable byte[] next = result.next();
-      results.add(next);
-    }
-    return results;
+  public Iterator<byte[]> multiGetBytesValues(List<Object> primaryKeys, String fieldName) {
+    return multiGetRawByteValues(primaryKeys, fieldName);
   }
 
   private Iterator<byte[]> multiGetRawByteValues(List<Object> primaryKeys, String fieldName) {
