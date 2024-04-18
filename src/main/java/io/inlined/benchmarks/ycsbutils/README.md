@@ -1,0 +1,2 @@
+Java source files in this package have been copied from https://github.com/brianfrankcooper/YCSB/tree/master.
+It was done to simplify dependency structure. We do not claim any copyright over this code.

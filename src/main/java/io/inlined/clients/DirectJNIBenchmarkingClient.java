@@ -3,6 +3,7 @@ package io.inlined.clients;
 import com.inlineio.schemas.Common;
 import com.inlineio.schemas.Streaming;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -108,6 +109,10 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
     _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
+  public void flushWrites() {
+    _dbAccessor.ikvClientJNI().flushWrites(_dbAccessor.handle());
+  }
+
   @Nullable
   @Override
   public byte[] getBytesValue(Object key, String fieldName) {
@@ -115,7 +120,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
   }
 
   @Override
-  public List<byte[]> multiGetBytesValues(List<Object> keys, String fieldName) {
+  public Iterator<byte[]> multiGetBytesValues(List<Object> keys, String fieldName) {
     return _dbAccessor.multiGetBytesValues(keys, fieldName);
   }
 

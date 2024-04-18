@@ -3,14 +3,10 @@ package io.inlined.benchmarks.clients;
 import com.google.common.collect.Maps;
 import io.inlined.benchmarks.DBClient;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.*;
 
 public class RedisSingleGetDBClient implements DBClient {
   private static final Logger LOGGER = LogManager.getLogger(RedisSingleGetDBClient.class);
@@ -61,6 +57,12 @@ public class RedisSingleGetDBClient implements DBClient {
   }
 
   @Override
+  public Iterator<byte[]> multiGetValueForKeys(
+      Iterator<byte[]> keys, String fieldName, byte[] fieldNameUtf8Bytes) {
+    throw new UnsupportedOperationException("todo");
+  }
+
+  @Override
   public void setValues(byte[] key, Map<String, byte[]> fieldValues) {
     // convert to Map<byte[], byte[]> values
     Map<byte[], byte[]> copy = Maps.newHashMapWithExpectedSize(fieldValues.size());
@@ -68,5 +70,10 @@ public class RedisSingleGetDBClient implements DBClient {
       copy.put(entry.getKey().getBytes(StandardCharsets.UTF_8), entry.getValue());
     }
     _jedisCluster.hset(key, copy);
+  }
+
+  @Override
+  public void flushValues() {
+    // no op
   }
 }

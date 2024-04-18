@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -31,7 +32,11 @@ public class NativeBinaryManager {
   private final String _mountDirectory;
 
   public NativeBinaryManager(String mountDirectory) {
-    _s3Client = S3Client.builder().region(Region.US_WEST_2).build();
+    _s3Client =
+        S3Client.builder()
+            .region(Region.US_WEST_2)
+            .credentialsProvider(AnonymousCredentialsProvider.create())
+            .build();
     _mountDirectory = mountDirectory;
   }
 
