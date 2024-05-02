@@ -2,6 +2,7 @@ package io.inlined;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 import io.inlined.clients.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -87,11 +88,17 @@ public class DirectJNIIntegrationTests {
     // BATCH READ
     List<Object> keys = ImmutableList.of((Object) key1, (Object) key2, (Object) key3);
 
-    List<String> names = client.multiGetStringValues(keys, NAME_FIELD_ACCESSOR);
+    List<String> names =
+        Streams.stream(
+                client.multiGetBytesValues(keys, Collections.singletonList(NAME_FIELD_ACCESSOR)))
+            .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+            .toList();
+
     Assertions.assertArrayEquals(names.toArray(new String[0]), new String[] {name1, name2, name3});
 
     List<byte[]> profiles =
-        Lists.newArrayList(client.multiGetBytesValues(keys, PROFILE_FIELD_ACCESSOR));
+        Lists.newArrayList(
+            client.multiGetBytesValues(keys, Collections.singletonList(PROFILE_FIELD_ACCESSOR)));
     Assertions.assertArrayEquals(
         profiles.toArray(new byte[0][]), new byte[][] {profile1, profile2, null});
 

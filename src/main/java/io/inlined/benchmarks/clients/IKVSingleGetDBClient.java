@@ -3,6 +3,7 @@ package io.inlined.benchmarks.clients;
 import com.google.common.collect.Lists;
 import io.inlined.benchmarks.DBClient;
 import io.inlined.clients.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -69,7 +70,8 @@ public class IKVSingleGetDBClient implements DBClient {
   @Override
   public Iterator<byte[]> multiGetValueForKeys(
       Iterator<byte[]> keys, String fieldName, byte[] fieldNameUtf8Bytes) {
-    return _reader.multiGetBytesValues(Lists.newArrayList(keys), fieldName);
+    return _reader.multiGetBytesValues(
+        Lists.newArrayList(keys), Collections.singletonList(fieldName));
   }
 
   @Override

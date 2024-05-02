@@ -120,19 +120,14 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
   }
 
   @Override
-  public Iterator<byte[]> multiGetBytesValues(List<Object> keys, String fieldName) {
-    return _dbAccessor.multiGetBytesValues(keys, fieldName);
+  public Iterator<byte[]> multiGetBytesValues(List<Object> keys, List<String> fieldNames) {
+    return _dbAccessor.multiGetBytesValues(keys, fieldNames);
   }
 
   @Nullable
   @Override
   public String getStringValue(Object key, String fieldName) {
     return _dbAccessor.getStringValue(key, fieldName);
-  }
-
-  @Override
-  public List<String> multiGetStringValues(List<Object> keys, String fieldName) {
-    return _dbAccessor.multiGetStringValues(keys, fieldName);
   }
 
   @Nullable
