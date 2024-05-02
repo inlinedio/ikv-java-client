@@ -45,8 +45,9 @@ public final class IKVClientJNI {
   @Nullable
   public native byte[] readField(long indexHandle, byte[] primaryKey, String fieldName);
 
-  public native byte[] batchReadField(
-      long indexHandle, byte[] sizePrefixedPrimaryKeys, String fieldNames);
+  // size prefixed (lower endian int) and concatenated
+  // primary keys and field names (utf8 encoding)
+  public native byte[] batchReadFields(long indexHandle, byte[] primaryKeys, byte[] fieldNames);
 
   /** Write method - only for benchmarking. */
   public native void processIKVDataEvent(long indexHandle, byte[] ikvDataEvent)

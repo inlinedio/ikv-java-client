@@ -142,37 +142,24 @@ public class DefaultInlineKVReader implements InlineKVReader {
         : ByteBuffer.wrap(result).order(ByteOrder.LITTLE_ENDIAN).getDouble();
   }
 
-  @Override
-  public List<String> multiGetStringValues(List<Object> primaryKeys, String fieldName) {
-    Iterator<byte[]> result = multiGetRawByteValues(primaryKeys, fieldName);
-    if (!result.hasNext()) {
-      return Collections.emptyList();
-    }
-
-    // drain into list, avoid Stream in hot path
-    List<String> results = new ArrayList<>(primaryKeys.size());
-    while (result.hasNext()) {
-      @Nullable byte[] next = result.next();
-      results.add(next == null ? null : new String(next, StandardCharsets.UTF_8));
-    }
-    return results;
-  }
-
   // Returns nullable byte[] in the form of an iterator
   @Override
-  public Iterator<byte[]> multiGetBytesValues(List<Object> primaryKeys, String fieldName) {
-    return multiGetRawByteValues(primaryKeys, fieldName);
+  public Iterator<byte[]> multiGetBytesValues(List<Object> primaryKeys, List<String> fieldNames) {
+    return multiGetRawByteValues(primaryKeys, fieldNames);
   }
 
-  private Iterator<byte[]> multiGetRawByteValues(List<Object> primaryKeys, String fieldName) {
+  private Iterator<byte[]> multiGetRawByteValues(
+      List<Object> primaryKeys, List<String> fieldNames) {
     if (primaryKeys == null || primaryKeys.isEmpty()) {
       return Collections.emptyIterator();
     }
 
-    // always not null
     byte[] sizePrefixedPrimaryKeys =
         sizePrefixedSerializedPrimaryKeys(primaryKeys, _clientOptions.primaryKeyType());
-    byte[] result = _ikvClientJni.batchReadField(_handle, sizePrefixedPrimaryKeys, fieldName);
+    byte[] sizePrefixedFieldNames = sizePrefixedFieldNames(fieldNames);
+
+    byte[] result =
+        _ikvClientJni.batchReadFields(_handle, sizePrefixedPrimaryKeys, sizePrefixedFieldNames);
     return new RawByteValuesIterator(result);
   }
 
@@ -192,7 +179,12 @@ public class DefaultInlineKVReader implements InlineKVReader {
     @Nullable
     public byte[] next() {
       int size = _result.getInt();
+
       if (size == 0) {
+        return new byte[0];
+      }
+
+      if (size == -1) {
         return null;
       }
 
@@ -208,18 +200,12 @@ public class DefaultInlineKVReader implements InlineKVReader {
    */
   private static byte[] sizePrefixedSerializedPrimaryKeys(
       List<Object> primaryKeys, Common.FieldType fieldType) {
-    if (primaryKeys == null || primaryKeys.isEmpty()) {
-      return new byte[0];
-    }
-
     int capacity = 0;
-
     int i = 0;
     byte[][] serializedPrimaryKeys = new byte[primaryKeys.size()][];
     for (Object primaryKey : primaryKeys) {
       byte[] serializedPrimaryKey = serializePrimaryKey(primaryKey, fieldType);
       capacity += 4 + serializedPrimaryKey.length;
-
       serializedPrimaryKeys[i] = serializedPrimaryKey;
       i++;
     }
@@ -244,5 +230,26 @@ public class DefaultInlineKVReader implements InlineKVReader {
       }
       default -> throw new UnsupportedOperationException();
     }
+  }
+
+  private static byte[] sizePrefixedFieldNames(List<String> fieldNames) {
+    int capacity = 0;
+
+    int i = 0;
+    byte[][] serializedFieldNames = new byte[fieldNames.size()][];
+    for (String fieldName : fieldNames) {
+      byte[] serializedFieldName = fieldName.getBytes(StandardCharsets.UTF_8);
+      capacity += 4 + serializedFieldName.length;
+      serializedFieldNames[i] = serializedFieldName;
+      i++;
+    }
+
+    ByteBuffer bb = ByteBuffer.allocate(capacity).order(ByteOrder.LITTLE_ENDIAN);
+    for (byte[] serializedFieldName : serializedFieldNames) {
+      bb.putInt(serializedFieldName.length);
+      bb.put(serializedFieldName);
+    }
+
+    return bb.array();
   }
 }
