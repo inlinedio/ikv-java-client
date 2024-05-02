@@ -281,9 +281,7 @@ public class ZipfianGenerator extends NumberGenerator {
     return nextLong(items);
   }
 
-  /**
-   * @todo Implement ZipfianGenerator.mean()
-   */
+  /** Todo: Implement ZipfianGenerator.mean() */
   @Override
   public double mean() {
     throw new UnsupportedOperationException("@todo implement ZipfianGenerator.mean()");

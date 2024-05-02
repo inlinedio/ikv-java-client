@@ -16,7 +16,8 @@ public class IKVSingleGetDBClient implements DBClient {
       String accountId,
       String accountPassKey,
       String storeName,
-      String primaryKeyFieldName) {
+      String primaryKeyFieldName,
+      String mountDir) {
     ClientOptions writerClientOptions =
         new ClientOptions.Builder()
             .withAccountId(accountId)
@@ -26,7 +27,7 @@ public class IKVSingleGetDBClient implements DBClient {
 
     ClientOptions readerClientOptions =
         new ClientOptions.Builder()
-            .withMountDirectory("/testing-store-dir")
+            .withMountDirectory(mountDir)
             .withStoreName(storeName)
             .withAccountId(accountId)
             .withAccountPassKey(accountPassKey)

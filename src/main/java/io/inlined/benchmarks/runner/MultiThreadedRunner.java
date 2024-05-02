@@ -53,7 +53,7 @@ public class MultiThreadedRunner {
    *
    *     [2] On IKV
    *     java -cp /path/to/jar io.inlined.benchmarks.runner.MultiThreadedRunner
-   *     "ikv" "accountid:foo,accountpasskey:bar,storename:baz,primarykeyfieldname:userid,init_writes:1,num_samples:1000,num_fields:3,value_size:50,duration_sec:10,threads:2"
+   *     "ikv" "accountid:foo,accountpasskey:bar,storename:baz,primarykeyfieldname:userid,mountdir:/path/to/dir;init_writes:1,num_samples:1000,num_fields:3,value_size:50,duration_sec:10,threads:2"
    *
    * </pre>
    *
@@ -71,9 +71,10 @@ public class MultiThreadedRunner {
         String storeName = benchmarkParams.getStringParameter("storename").get();
         String primaryKeyFieldName =
             benchmarkParams.getStringParameter("primarykeyfieldname").get();
+        String mountdir = benchmarkParams.getStringParameter("mountdir").get();
         DBClient =
             new IKVSingleGetDBClient(
-                false, accountid, accountpasskey, storeName, primaryKeyFieldName);
+                false, accountid, accountpasskey, storeName, primaryKeyFieldName, mountdir);
       }
         // write directly into on-host index
       case "directikv" -> {
@@ -82,9 +83,10 @@ public class MultiThreadedRunner {
         String storeName = benchmarkParams.getStringParameter("storename").get();
         String primaryKeyFieldName =
             benchmarkParams.getStringParameter("primarykeyfieldname").get();
+        String mountdir = benchmarkParams.getStringParameter("mountdir").get();
         DBClient =
             new IKVSingleGetDBClient(
-                true, accountid, accountpasskey, storeName, primaryKeyFieldName);
+                true, accountid, accountpasskey, storeName, primaryKeyFieldName, mountdir);
       }
       case "redis" -> {
         String clusterUrls = benchmarkParams.getStringParameter("clusterUrls").get();
@@ -281,6 +283,7 @@ public class MultiThreadedRunner {
           break benchLoop;
         }
 
+        // TODO- fix.
         int fid = ThreadLocalRandom.current().nextInt(0, _numFields);
         String fieldName = _fieldNames.get(fid);
 
