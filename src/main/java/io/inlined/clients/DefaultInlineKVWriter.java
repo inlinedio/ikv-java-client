@@ -8,15 +8,18 @@ import com.inlineio.schemas.Streaming;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /** RPC based writer instance. */
 public class DefaultInlineKVWriter implements InlineKVWriter {
   private static final long UNINITIALIZED_HANDLE = -1;
+
   private final String _mountDirectory;
   private final String _primaryKeyFieldName;
   private final String _partitioningKeyFieldName;
+
   private final Common.IKVStoreConfig _clientServerMergedConfig;
   private volatile long _handle;
   private volatile IKVClientJNI _ikvClientJni;
@@ -150,6 +153,49 @@ public class DefaultInlineKVWriter implements InlineKVWriter {
 
     // send
     _ikvClientJni.singlePartitionWrite(_handle, partitioningKey.toByteArray(), event.toByteArray());
+  }
+
+  @Override
+  public void dropFieldsByName(List<String> fieldNames) {
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
+    Streaming.DropFieldEvent dropFieldEvent =
+        Streaming.DropFieldEvent.newBuilder()
+            .addAllFieldNames(fieldNames)
+            .setDropAll(false)
+            .build();
+    sendDropFieldEvent(dropFieldEvent);
+  }
+
+  @Override
+  public void dropFieldsByNamePrefix(List<String> fieldNamePrefixes) {
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
+    Streaming.DropFieldEvent dropFieldEvent =
+        Streaming.DropFieldEvent.newBuilder()
+            .addAllFieldNamePrefixes(fieldNamePrefixes)
+            .setDropAll(false)
+            .build();
+    sendDropFieldEvent(dropFieldEvent);
+  }
+
+  @Override
+  public void dropAllDocuments() {
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
+    Streaming.DropFieldEvent dropFieldEvent =
+        Streaming.DropFieldEvent.newBuilder().setDropAll(true).build();
+    sendDropFieldEvent(dropFieldEvent);
+  }
+
+  private void sendDropFieldEvent(Streaming.DropFieldEvent dropFieldEvent) {
+    Timestamp timestamp = Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
+
+    Streaming.IKVDataEvent event =
+        Streaming.IKVDataEvent.newBuilder()
+            .setEventHeader(
+                Streaming.EventHeader.newBuilder().setSourceTimestamp(timestamp).build())
+            .setDropFieldEvent(dropFieldEvent)
+            .build();
+
+    _ikvClientJni.broadcastWrite(_handle, event.toByteArray());
   }
 
   private FieldValue extractPrimaryKeyValue(Map<String, FieldValue> document)
