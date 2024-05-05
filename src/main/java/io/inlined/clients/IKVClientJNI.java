@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-public final class IKVClientJNI {
+public final class IKVClientJNI extends ClassLoader {
   // can throw UnsatisfiedLinkError for a wrong path or incompatible binary
   private IKVClientJNI(String pathToNativeBinary) {
     System.load(pathToNativeBinary);
