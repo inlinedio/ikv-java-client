@@ -49,8 +49,18 @@ public final class IKVClientJNI {
   // primary keys and field names (utf8 encoding)
   public native byte[] batchReadFields(long indexHandle, byte[] primaryKeys, byte[] fieldNames);
 
+  /** Writer (to IKV data plane) methods */
+  public native long openWriter(byte[] config) throws RuntimeException;
+
+  public native void closeWriter(long handle) throws RuntimeException;
+
+  public native void singlePartitionWrite(
+      long handle, byte[] partitioningKeyAsFieldValue, byte[] ikvDataEvent) throws RuntimeException;
+
+  public native void broadcastWrite(long handle, byte[] ikvDataEvent) throws RuntimeException;
+
   /** Write method - only for benchmarking. */
-  public native void processIKVDataEvent(long indexHandle, byte[] ikvDataEvent)
+  public native void directWriteIKVDataEvent(long indexHandle, byte[] ikvDataEvent)
       throws RuntimeException;
 
   /** Flush writes method - only for benchmarking. */

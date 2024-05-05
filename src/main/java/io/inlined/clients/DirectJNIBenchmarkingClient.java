@@ -71,7 +71,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().directWriteIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   @Override
@@ -90,7 +90,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().directWriteIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   @Override
@@ -106,7 +106,7 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
             .build();
 
     // jni call
-    _dbAccessor.ikvClientJNI().processIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
+    _dbAccessor.ikvClientJNI().directWriteIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
   public void flushWrites() {

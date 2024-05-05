@@ -17,6 +17,16 @@ public class IKVClientFactory {
     return new DefaultInlineKVReader(clientOptions, mergedConfig);
   }
 
+  public InlineKVWriter createNewWriterInstance(ClientOptions clientOptions) {
+    // TODO: remove server side config fetching
+    ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
+    Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
+    Common.IKVStoreConfig clientSuppliedConfig = clientOptions.asIKVStoreConfig();
+    Common.IKVStoreConfig mergedConfig = mergeConfigs(clientSuppliedConfig, serverConfig);
+
+    return new DefaultInlineKVWriter(clientOptions, mergedConfig);
+  }
+
   public DirectJNIBenchmarkingClient createDirectBenchmarkingClient(ClientOptions clientOptions) {
     ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
     Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
@@ -30,9 +40,5 @@ public class IKVClientFactory {
   public static Common.IKVStoreConfig mergeConfigs(
       Common.IKVStoreConfig clientCfg, Common.IKVStoreConfig serverCfg) {
     return Common.IKVStoreConfig.newBuilder().mergeFrom(serverCfg).mergeFrom(clientCfg).build();
-  }
-
-  public InlineKVWriter createNewWriterInstance(ClientOptions clientOptions) {
-    return new DefaultInlineKVWriter(clientOptions);
   }
 }
