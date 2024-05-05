@@ -8,9 +8,11 @@ public class IKVClientFactory {
   public IKVClientFactory() {}
 
   public InlineKVReader createNewReaderInstance(ClientOptions clientOptions) {
-    // TODO: remove server side config fetching
+    // TODO: remove server side config fetching (do it in core library)
     ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
     Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
+    fetcher.close();
+
     Common.IKVStoreConfig clientSuppliedConfig = clientOptions.asIKVStoreConfig();
     Common.IKVStoreConfig mergedConfig = mergeConfigs(clientSuppliedConfig, serverConfig);
 
@@ -18,9 +20,11 @@ public class IKVClientFactory {
   }
 
   public InlineKVWriter createNewWriterInstance(ClientOptions clientOptions) {
-    // TODO: remove server side config fetching
+    // TODO: remove server side config fetching (do it in core library)
     ServerSuppliedConfigFetcher fetcher = new ServerSuppliedConfigFetcher(clientOptions);
     Common.IKVStoreConfig serverConfig = fetcher.fetchServerConfig();
+    fetcher.close();
+
     Common.IKVStoreConfig clientSuppliedConfig = clientOptions.asIKVStoreConfig();
     Common.IKVStoreConfig mergedConfig = mergeConfigs(clientSuppliedConfig, serverConfig);
 

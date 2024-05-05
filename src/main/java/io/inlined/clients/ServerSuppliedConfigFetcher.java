@@ -8,8 +8,10 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.protobuf.StatusProto;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class ServerSuppliedConfigFetcher {
+  private final ManagedChannel _channel;
   private final InlineKVWriteServiceGrpc.InlineKVWriteServiceBlockingStub _stub;
   private final Services.UserStoreContextInitializer _userStoreContextInitializer;
 
@@ -19,12 +21,21 @@ public class ServerSuppliedConfigFetcher {
         ManagedChannelBuilder.forAddress(
                 IKVConstants.IKV_GATEWAY_GRPC_URL, IKVConstants.IKV_GATEWAY_GRPC_PORT)
             .overrideAuthority("www.inlined.io");
-    ManagedChannel channel = channelBuilder.build();
-    _stub = InlineKVWriteServiceGrpc.newBlockingStub(channel);
+    _channel = channelBuilder.build();
+    _stub = InlineKVWriteServiceGrpc.newBlockingStub(_channel);
     _userStoreContextInitializer =
         Objects.requireNonNull(clientOptions.createUserStoreContextInitializer());
   }
 
+  public void close() {
+    _channel.shutdown();
+    try {
+      _channel.awaitTermination(100, TimeUnit.MICROSECONDS);
+    } catch (InterruptedException ignored) {
+    }
+  }
+
+  // TODO: add retries with grpc service configs
   public Common.IKVStoreConfig fetchServerConfig() {
     Services.GetUserStoreConfigRequest request =
         Services.GetUserStoreConfigRequest.newBuilder()
