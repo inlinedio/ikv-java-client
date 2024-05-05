@@ -1,6 +1,7 @@
 package io.inlined.clients;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface InlineKVWriter {
   /**
@@ -47,9 +48,6 @@ public interface InlineKVWriter {
    */
   void deleteFieldValues(IKVDocument documentId, Collection<String> fieldsToDelete);
 
-  // void batchDeleteFieldValues(Collection<IKVDocument> documentIds, Collection<String>
-  // fieldsToDelete);
-
   /**
    * Delete a document if it exists. NO OP if document is not indexed.
    *
@@ -57,5 +55,18 @@ public interface InlineKVWriter {
    */
   void deleteDocument(IKVDocument documentId);
 
-  // void batchDeleteDocuments(Collection<IKVDocument> documentIds);
+  /**
+   * Drop specified fields for all documents. Attempts to drop primary-key field are silently
+   * ignored (no error).
+   */
+  void dropFieldsByName(List<String> fieldNames);
+
+  /**
+   * Drop specified fields for all documents, by specifying field name prefixes. Attempts to drop
+   * primary-key field are silently ignored (no error).
+   */
+  void dropFieldsByNamePrefix(List<String> fieldNamePrefixes);
+
+  /** Delete all fields for all documents in the index. */
+  void dropAllDocuments();
 }

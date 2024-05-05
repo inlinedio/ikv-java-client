@@ -109,6 +109,21 @@ public class DirectJNIBenchmarkingClient implements InlineKVReader, InlineKVWrit
     _dbAccessor.ikvClientJNI().directWriteIKVDataEvent(_dbAccessor.handle(), event.toByteArray());
   }
 
+  @Override
+  public void dropFieldsByName(List<String> fieldNames) {
+    throw new UnsupportedOperationException("not supported yet");
+  }
+
+  @Override
+  public void dropFieldsByNamePrefix(List<String> fieldNamePrefixes) {
+    throw new UnsupportedOperationException("not supported yet");
+  }
+
+  @Override
+  public void dropAllDocuments() {
+    throw new UnsupportedOperationException("not supported yet");
+  }
+
   public void flushWrites() {
     _dbAccessor.ikvClientJNI().flushWrites(_dbAccessor.handle());
   }
