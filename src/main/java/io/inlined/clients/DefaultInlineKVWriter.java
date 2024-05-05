@@ -1,161 +1,168 @@
 package io.inlined.clients;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.Timestamp;
+import com.inlineio.schemas.Common;
 import com.inlineio.schemas.Common.*;
-import com.inlineio.schemas.InlineKVWriteServiceGrpc;
-import com.inlineio.schemas.Services.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
+import com.inlineio.schemas.Streaming;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 
 /** RPC based writer instance. */
 public class DefaultInlineKVWriter implements InlineKVWriter {
-  private volatile InlineKVWriteServiceGrpc.InlineKVWriteServiceBlockingStub _stub;
-  private final UserStoreContextInitializer _userStoreCtxInitializer;
+  private static final long UNINITIALIZED_HANDLE = -1;
+  private final String _mountDirectory;
+  private final String _primaryKeyFieldName;
+  private final String _partitioningKeyFieldName;
+  private final Common.IKVStoreConfig _clientServerMergedConfig;
+  private volatile long _handle;
+  private volatile IKVClientJNI _ikvClientJni;
 
-  public DefaultInlineKVWriter(ClientOptions clientOptions) {
-    Objects.requireNonNull(clientOptions);
-    _userStoreCtxInitializer = clientOptions.createUserStoreContextInitializer();
+  public DefaultInlineKVWriter(
+      ClientOptions options, Common.IKVStoreConfig clientServerMergedConfig) {
+    _handle = UNINITIALIZED_HANDLE;
+    _ikvClientJni = null;
+
+    Objects.requireNonNull(options);
+    _mountDirectory =
+        Preconditions.checkNotNull(
+            options.mountDirectory().orElse(null), "mountDirectory is a required client option");
+
+    _clientServerMergedConfig = clientServerMergedConfig;
+    _primaryKeyFieldName =
+        clientServerMergedConfig.getStringConfigsOrThrow(IKVConstants.PRIMARY_KEY_FIELD_NAME);
+    _partitioningKeyFieldName =
+        clientServerMergedConfig.getStringConfigsOrThrow(IKVConstants.PARTITIONING_KEY_FIELD_NAME);
   }
 
   @Override
   public void startupWriter() {
-    ManagedChannelBuilder<?> channelBuilder =
-        ManagedChannelBuilder.forAddress(
-                IKVConstants.IKV_GATEWAY_GRPC_URL, IKVConstants.IKV_GATEWAY_GRPC_PORT)
-            .overrideAuthority("www.inlined.io");
-    ManagedChannel channel = channelBuilder.build();
-    _stub = InlineKVWriteServiceGrpc.newBlockingStub(channel);
+    if (_handle != UNINITIALIZED_HANDLE || _ikvClientJni != null) {
+      return;
+    }
+
+    try {
+      _ikvClientJni = IKVClientJNI.createNew(_mountDirectory);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    // can throw (reader startup sequence)
+    _handle = _ikvClientJni.openWriter(_clientServerMergedConfig.toByteArray());
   }
 
   @Override
   public void shutdownWriter() {
-    _stub = null;
+    if (_handle == UNINITIALIZED_HANDLE || _ikvClientJni == null) {
+      return;
+    }
+
+    // can throw
+    _ikvClientJni.closeWriter(_handle);
+    _ikvClientJni = null;
+    _handle = UNINITIALIZED_HANDLE;
   }
 
   @Override
   public void upsertFieldValues(IKVDocument document) {
-    Preconditions.checkState(
-        _stub != null, "client cannot be used before finishing startup() or after shutdown()");
-    Preconditions.checkArgument(
-        document.asNameToFieldValueMap().size() >= 1, "empty document not allowed");
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
 
+    // extract primary and partitioning keys
+    Map<String, FieldValue> documentAsFieldValueMap = document.asNameToFieldValueMap();
+    Objects.requireNonNull(extractPrimaryKeyValue(documentAsFieldValueMap));
+    FieldValue partitioningKey =
+        Objects.requireNonNull(extractPartitioningKeyValue(documentAsFieldValueMap));
+
+    // construct IKVDataEvent
     IKVDocumentOnWire documentOnWire =
-        IKVDocumentOnWire.newBuilder().putAllDocument(document.asNameToFieldValueMap()).build();
+        IKVDocumentOnWire.newBuilder().putAllDocument(documentAsFieldValueMap).build();
     Timestamp timestamp = Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
-
-    UpsertFieldValuesRequest request =
-        UpsertFieldValuesRequest.newBuilder()
-            .setDocument(documentOnWire)
-            .setTimestamp(timestamp)
-            .setUserStoreContextInitializer(_userStoreCtxInitializer)
+    Streaming.IKVDataEvent event =
+        Streaming.IKVDataEvent.newBuilder()
+            .setEventHeader(
+                Streaming.EventHeader.newBuilder().setSourceTimestamp(timestamp).build())
+            .setUpsertDocumentFieldsEvent(
+                Streaming.UpsertDocumentFieldsEvent.newBuilder()
+                    .setDocument(documentOnWire)
+                    .build())
             .build();
 
-    StatusRuntimeException maybeException = null;
-    for (int retry = 0; retry < 3; retry++) {
-      try {
-        // make grpc call
-        Status ignored = _stub.upsertFieldValues(request);
-        return;
-      } catch (StatusRuntimeException e) {
-        maybeException = e;
-
-        // retry only when servers are unavailable
-        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
-          break;
-        }
-      }
-    }
-
-    throw new RuntimeException(
-        "upsertFieldValues failed with error: "
-            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
+    // send
+    _ikvClientJni.singlePartitionWrite(_handle, partitioningKey.toByteArray(), event.toByteArray());
   }
 
   @Override
   public void deleteFieldValues(IKVDocument documentId, Collection<String> fieldsToDelete) {
-    Preconditions.checkState(
-        _stub != null, "client cannot be used before finishing startup() or after shutdown()");
-    Preconditions.checkArgument(
-        documentId.asNameToFieldValueMap().size() >= 1, "need document-identifiers");
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
     if (fieldsToDelete.isEmpty()) {
       return;
     }
 
+    // extract primary and partitioning keys
+    Map<String, FieldValue> documentAsFieldValueMap = documentId.asNameToFieldValueMap();
+    Objects.requireNonNull(extractPrimaryKeyValue(documentAsFieldValueMap));
+    FieldValue partitioningKey =
+        Objects.requireNonNull(extractPartitioningKeyValue(documentAsFieldValueMap));
+
     IKVDocumentOnWire docId =
-        IKVDocumentOnWire.newBuilder().putAllDocument(documentId.asNameToFieldValueMap()).build();
+        IKVDocumentOnWire.newBuilder().putAllDocument(documentAsFieldValueMap).build();
     Timestamp timestamp = Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
 
-    DeleteFieldValueRequest request =
-        DeleteFieldValueRequest.newBuilder()
-            .setDocumentId(docId)
-            .addAllFieldNames(fieldsToDelete)
-            .setTimestamp(timestamp)
-            .setUserStoreContextInitializer(_userStoreCtxInitializer)
+    Streaming.IKVDataEvent event =
+        Streaming.IKVDataEvent.newBuilder()
+            .setEventHeader(
+                Streaming.EventHeader.newBuilder().setSourceTimestamp(timestamp).build())
+            .setDeleteDocumentFieldsEvent(
+                Streaming.DeleteDocumentFieldsEvent.newBuilder()
+                    .setDocumentId(docId)
+                    .addAllFieldsToDelete(fieldsToDelete)
+                    .build())
             .build();
 
-    StatusRuntimeException maybeException = null;
-    for (int retry = 0; retry < 3; retry++) {
-      try {
-        // make grpc call
-        Status ignored = _stub.deleteFieldValues(request);
-        return;
-      } catch (StatusRuntimeException e) {
-        maybeException = e;
-
-        // retry only when servers are unavailable
-        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
-          break;
-        }
-      }
-    }
-
-    throw new RuntimeException(
-        "deleteFieldValues failed with error: "
-            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
+    // send
+    _ikvClientJni.singlePartitionWrite(_handle, partitioningKey.toByteArray(), event.toByteArray());
   }
 
   @Override
   public void deleteDocument(IKVDocument documentId) {
-    Preconditions.checkState(
-        _stub != null, "client cannot be used before finishing startup() or after shutdown()");
-    Preconditions.checkArgument(
-        documentId.asNameToFieldValueMap().size() >= 1, "need document-identifiers");
+    Preconditions.checkState(_handle != UNINITIALIZED_HANDLE);
+
+    // extract primary and partitioning keys
+    Map<String, FieldValue> documentAsFieldValueMap = documentId.asNameToFieldValueMap();
+    Objects.requireNonNull(extractPrimaryKeyValue(documentAsFieldValueMap));
+    FieldValue partitioningKey =
+        Objects.requireNonNull(extractPartitioningKeyValue(documentAsFieldValueMap));
 
     IKVDocumentOnWire docId =
-        IKVDocumentOnWire.newBuilder().putAllDocument(documentId.asNameToFieldValueMap()).build();
+        IKVDocumentOnWire.newBuilder().putAllDocument(documentAsFieldValueMap).build();
     Timestamp timestamp = Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build();
 
-    DeleteDocumentRequest request =
-        DeleteDocumentRequest.newBuilder()
-            .setDocumentId(docId)
-            .setTimestamp(timestamp)
-            .setUserStoreContextInitializer(_userStoreCtxInitializer)
+    Streaming.IKVDataEvent event =
+        Streaming.IKVDataEvent.newBuilder()
+            .setEventHeader(
+                Streaming.EventHeader.newBuilder().setSourceTimestamp(timestamp).build())
+            .setDeleteDocumentEvent(
+                Streaming.DeleteDocumentEvent.newBuilder().setDocumentId(docId).build())
             .build();
 
-    StatusRuntimeException maybeException = null;
-    for (int retry = 0; retry < 3; retry++) {
-      try {
-        // make grpc call
-        Status ignored = _stub.deleteDocument(request);
-        return;
-      } catch (StatusRuntimeException e) {
-        maybeException = e;
+    // send
+    _ikvClientJni.singlePartitionWrite(_handle, partitioningKey.toByteArray(), event.toByteArray());
+  }
 
-        // retry only when servers are unavailable
-        if (e.getStatus().getCode() != io.grpc.Status.Code.UNAVAILABLE) {
-          break;
-        }
-      }
-    }
+  private FieldValue extractPrimaryKeyValue(Map<String, FieldValue> document)
+      throws IllegalArgumentException {
+    FieldValue value = document.get(_primaryKeyFieldName);
+    Preconditions.checkArgument(value != null, "primaryKey missing");
+    return value;
+  }
 
-    throw new RuntimeException(
-        "deleteDocument failed with error: "
-            + MoreObjects.firstNonNull(maybeException.getMessage(), "unknown"));
+  private FieldValue extractPartitioningKeyValue(Map<String, FieldValue> document)
+      throws IllegalArgumentException {
+    FieldValue value = document.get(_partitioningKeyFieldName);
+    Preconditions.checkArgument(value != null, "partitioningKey missing");
+    return value;
   }
 }
